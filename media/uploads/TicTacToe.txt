@@ -1,0 +1,143 @@
+import java.util.*;
+
+/*
+* Task: Tic-Tac-Toe Game
+Description: Implement a two-player tic-tac-toe
+game. Display the game board and prompt each
+player to enter their moves. Check for a winning
+condition or a draw after each move, and display
+the result accordingly. Allow the players to play
+multiple rounds if desired.
+Skills: Arrays or matrices, loops, conditional
+statements.
+*
+* */
+
+public class TicTacToe {
+    public static boolean gameWon(char[][] board,char cell,int row,int column){
+        for (int i = 0; i < 3; i++) {
+            if ((board[i][0] =='X' && board[i][1] =='X' && board[i][2] == 'X') ||
+                    (board[0][i] =='X' && board[1][i] =='X' && board[2][i] =='X')) {
+                return true;
+            }
+            if ((board[i][0] == 'O' && board[i][1] =='O' && board[i][2] =='O') ||
+                    (board[0][i] == 'O' && board[1][i] == 'O' && board[2][i] =='O')) {
+                return true;
+            }
+        }
+
+        // Check diagonals
+        if ((board[0][0] =='X' && board[1][1] =='X' && board[2][2] =='X') ||
+                (board[0][2] =='X' && board[1][1] =='X' && board[2][0] =='X')) {
+            return true;
+        }
+        if ((board[0][0] =='O' && board[1][1] =='O' && board[2][2] =='O') ||
+                (board[0][2] =='O' && board[1][1] =='O' && board[2][0] =='O')) {
+            return true;
+        }
+
+        return false;
+    }
+    public static boolean checkRC(int row,int column){
+        return ((row>=0)&&(column<=2)&&(column>=0)&&(row<=2))?true:false;
+    }
+    public static void fillCell(char[][] board,String player,int row,int column,String player1,String player2){
+        if(player==player1){
+            board[row][column]='X';
+        }
+        if(player==player2){
+            board[row][column]='O';
+        }
+    }
+    public static String changePlayer(String currentPlayer,String player1,String player2){
+        if(currentPlayer==player1){
+            return player2;
+        }
+        return player1;
+    }
+    public static void playGame(String player1,String player2) {
+        char board[][]={{' ',' ',' '},{' ',' ',' '},{' ',' ',' '}};
+        Scanner obj=new Scanner(System.in);
+        printBoard(board);
+        String currentPlayer=player1;
+        boolean gameWon=false;
+        boolean cell=true;
+        do {
+            printBoard(board);
+            cell=checkCells(board);
+            if(cell==true){
+
+            }
+            else{
+                System.out.println("Match draw..!");
+                gameWon=true;
+                continue;
+            }
+            System.out.println(" Current Player "+currentPlayer+" : Enter Your Indexes (Row and Column of the board):\n");
+            int row=obj.nextInt();
+            System.out.println();
+            int column=obj.nextInt();
+            boolean inputValidity=checkRC(row,column);
+            if(inputValidity==true){
+                fillCell(board,currentPlayer,row,column,player1,player2);
+            }
+            else {
+                do {
+                    System.out.println("Not Valid.Enter Again!");
+                    System.out.println(" Current Player " + currentPlayer + " : Enter Your Indexes (Row and Column of the board):\n");
+                    row = obj.nextInt();
+                    System.out.println();
+                    column = obj.nextInt();
+                    inputValidity = checkRC(row, column);
+                } while (inputValidity == false);
+                fillCell(board, currentPlayer, row, column, player1, player2);
+            }
+            gameWon=gameWon(board,board[row][column],row,column);
+            if(gameWon){
+                System.out.println(currentPlayer+" Wins..!");
+                break;
+            };
+            currentPlayer=changePlayer(currentPlayer,player1,player2);
+
+        }while (gameWon==false);
+        }
+    public static boolean checkCells(char[][] board){
+        for(int i=0;i<3;i++){
+            for(int j=0;j<3;j++){
+                if(board[i][j]==' '){
+                    return true;
+                }
+                else{
+                    continue;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static void printBoard(char[][] board) {
+        System.out.println("-------------");
+        for (int i = 0; i < 3; i++) {
+            System.out.print("| ");
+            for (int j = 0; j < 3; j++) {
+                System.out.print(board[i][j] + " | ");
+            }
+            System.out.println();
+            System.out.println("-------------");
+        }
+    }
+
+    public static void main(String[] args) {
+        Scanner obj = new Scanner(System.in);
+        System.out.println("Enter the Player 1 Name:");
+        String player1 = obj.nextLine();
+        System.out.println("Enter the Player 2 Name:");
+        String player2 = obj.nextLine();
+        char choice[]=new char[5];
+        do {
+            playGame(player1,player2);
+            System.out.println("Do You want to play Again?(yes/no)\n");
+            choice[0] = obj.next().charAt(0);
+        } while ((choice[0] =='y') || (choice[0] =='Y'));
+    }
+}

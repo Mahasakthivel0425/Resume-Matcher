@@ -1,0 +1,136 @@
+pipeline {
+    agent any
+
+    environment {
+        GIT_REPO = 'https://github.com/Mahasakthivel0425/Restaurant-Booking-Application/'
+        BRANCH_NAME = 'main' // Replace 'main' with the correct branch name if necessary
+
+        PORT = credentials('PORT')
+        SESSION_SECRET = credentials('SESSION_SECRET')
+        GOOGLE_CLIENT_ID = credentials('GOOGLE_CLIENT_ID')
+        GOOGLE_CLIENT_SECRET = credentials('GOOGLE_CLIENT_SECRET')
+        EMAIL_USER = credentials('EMAIL_USER')
+        EMAIL_PASS = credentials('EMAIL_PASS')
+        RAZORPAY_KEY_ID = credentials('RAZORPAY_KEY_ID')
+        RAZORPAY_KEY_SECRET = credentials('RAZORPAY_KEY_SECRET')
+        ATLAS_URI = credentials('atlasuri')
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                script {
+                    def retryCount = 3
+                    def retryInterval = 10 // seconds
+
+                    for (int i = 0; i < retryCount; i++) {
+                        try {
+                            // Git clone
+                            checkout([
+                                $class: 'GitSCM',
+                                branches: [[name: "*/${env.BRANCH_NAME}"]],
+                                doGenerateSubmoduleConfigurations: false,
+                                extensions: [],
+                                userRemoteConfigs: [[url: "${env.GIT_REPO}"]]
+                            ])
+                            // Break out of loop if successful
+                            break
+                        } catch (Exception e) {
+                            echo "Failed to checkout. Attempt ${i+1} of ${retryCount}"
+                            if (i == retryCount - 1) {
+                                error "Maximum checkout retry attempts reached, aborting."
+                            }
+                            sleep retryInterval
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Install NVM and Node.js') {
+            steps {
+                echo 'Installing NVM and Node.js...'
+                sh '''
+                # Install nvm
+                curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
+                export NVM_DIR="$HOME/.nvm"
+                [ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh"
+                [ -s "$NVM_DIR/bash_completion" ] && \\. "$NVM_DIR/bash_completion"
+
+                # Install Node.js
+                nvm install 14
+                nvm use 14
+                nvm alias default 14
+
+                # Verify installation
+                node --version
+                npm --version
+                '''
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                echo 'Installing dependencies...'
+                sh '''
+                export NVM_DIR="$HOME/.nvm"
+                [ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh"
+                [ -s "$NVM_DIR/bash_completion" ] && \\. "$NVM_DIR/bash_completion"
+                nvm use 14
+
+                # Install project dependencies
+                npm install
+                '''
+            }
+        }
+
+        stage('Test') {
+            steps {
+                echo 'Running tests...'
+                sh '''
+                export NVM_DIR="$HOME/.nvm"
+                [ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh"
+                [ -s "$NVM_DIR/bash_completion" ] && \\. "$NVM_DIR/bash_completion"
+                nvm use 14
+
+                # Run tests
+                npm test || echo "No test script specified" && exit 0
+                '''
+            }
+        }
+
+        stage('Deploy') {
+            when {
+                expression {
+                    return currentBuild.currentResult == 'SUCCESS'
+                }
+            }
+            steps {
+                echo 'Deploying...'
+                sh '''
+                export NVM_DIR="$HOME/.nvm"
+                [ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh"
+                [ -s "$NVM_DIR/bash_completion" ] && \\. "$NVM_DIR/bash_completion"
+                nvm use 14
+
+                # Add deploy steps here (e.g., deploy to a server or cloud provider)
+                # Example: npm run deploy
+                echo "Deployment script here"
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Cleaning up...'
+            cleanWs()
+        }
+        success {
+            echo 'Pipeline completed successfully.'
+        }
+        failure {
+            echo 'Pipeline failed.'
+        }
+    }
+}

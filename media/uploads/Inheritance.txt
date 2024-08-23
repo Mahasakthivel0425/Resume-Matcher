@@ -1,0 +1,10 @@
+1.whenever parameterized constructors get instansiated to a derived class, the base class parameters should be called by using the super method.
+
+Example: super(int parameter1,String parameter2);
+
+
+2.If the base class constructors without parameters is initialized manually, theres no problem .
+
+3.If the base class constructors with parameters not initialized manually, there will be error displayed.
+
+4.If the super constructor not called inside the derived class,By default the derived class constructor will call the super() method. 
